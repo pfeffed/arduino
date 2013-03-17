@@ -1,24 +1,8 @@
-/*
-  Repeating Wifi Web client
-
- This sketch connects to a a web server and makes a request
- using an Arduino Wifi shield.
-
- Circuit:
- * Wifi shield attached to pins 10, 11, 12, 13
-
- created 23 Apr 2012
- by Tom Igoe
-
- http://arduino.cc/en/Tutorial/WifiWebClientRepeating
- This code is in the public domain.
- */
-
 #include <SPI.h>
 #include <WiFi.h>
 #include <DHT.h>
 
-/* --- DHT TEMP AND HUMIDITY INITIALIZATION CODE --- */
+/* ---- DHT TEMP AND HUMIDITY INITIALIZATION CODE ----- */
 #define DHTPIN 2     // what pin we're connected to
 
 // Uncomment whatever type you're using!
@@ -33,7 +17,14 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
+unsigned long dhtLastConnectionTime = 0;
+const unsigned long dhtReadInterval = 5000;
+String humidity;
+String temperature;
+
 /* --- DHT TEMP AND HUMIDITY INITIALIZATION CODE END --- */
+
+/* ------------ WiFi INITIALIZATION CODE --------------- */
 
 char ssid[] = "PfefferNET";      //  your network SSID (name) 
 char pass[] = "whatawonderfulworld";   // your network password
@@ -47,19 +38,34 @@ WiFiClient humidityClient;
 
 // server address:
 //char server[] = "www.arduino.cc";
-char server[] = "192.168.1.90";
-//char server[] = "nameless-anchorage-9071.herokuapp.com/";
+char server[] = "192.168.1.90"; int port = 3000;
+//char server[] = "nameless-anchorage-9071.herokuapp.com/"; int port = 80;
 //IPAddress server(64,131,82,241);
-int port = 3000;
+
+
+/* ------------- WiFi INITIALIZATION END ---------------- */
+
+/* -------------------- LDR CODE ------------------------ */
+
+int ldr_pin = 2;
+
+String readStringLightLevel(){
+  int light_level = analogRead(ldr_pin);
+  String result;
+  if (light_level < 50)
+    result = "very dark";
+  else if (light_level < 125)
+    result = "dim";
+  else
+    result = "bright";
+}
+
+/* ------------------ LDR CODE END ---------------------- */
 
 unsigned long temperatureLastConnectionTime = 0;           // last time you connected to the server, in milliseconds
 boolean temperatureLastConnected = false;                  // state of the connection last time through the main loop
 unsigned long humidityLastConnectionTime = 0;           // last time you connected to the server, in milliseconds
 boolean humidityLastConnected = false;                  // state of the connection last time through the main loop
-unsigned long dhtLastConnectionTime = 0;
-const unsigned long dhtReadInterval = 5000;
-String humidity;
-String temperature;
 
 const unsigned long postingInterval = 60000;  // delay between updates, in milliseconds
 int com_error_count = 0;
@@ -96,13 +102,6 @@ void loop() {
     if (isnan(t) || isnan(h)) {
       Serial.println("Failed to read from DHT");
     } else {
-//      Serial.print("Humidity: "); 
-//      Serial.print(h);
-//      Serial.print(" %\t");
-//      Serial.print("Temperature: "); 
-//      Serial.print(t);
-//      Serial.println(" *C");
-//      
       humidity = floatToString(h,1);
       Serial.println(humidity);
       temperature = floatToString(t,1);
@@ -124,33 +123,7 @@ void loop() {
 // this method makes a HTTP connection to the server:
 void httpRequest(WiFiClient client, String data, unsigned long &lastConnectionTime) {
   // if there's a successful connection:
-  //Serial.println(data);
   if (client.connect(server, port)) {
-//    Serial.println("connecting...");
-//    // send the HTTP PUT request:
-//    client.println("POST /sensor_readings HTTP/1.1");
-//    client.println("Host: 192.168.1.90");
-// //   client.println("Accept: application/jsonrequest");
-//    client.println("Content-Type: application/x-www-form-urlencoded");
-//  //  client.println("User-Agent: arduino-ethernet");
-//    client.println("Connection: close");
-//    client.print("Content-Length: ");
-//    client.println(data.length());
-//    client.println();
-//    client.println(data);
-//    client.println();
-    
-//    Serial.println("connected");
-//    client.println("POST /sensor_readings HTTP/1.1");
-//    client.println("Host: 192.168.1.90");
-//    client.println("Content-Type: application/x-www-form-urlencoded");
-//    client.println("Connection: close");
-//    client.print("Content-Length: ");
-//    client.println(data.length());
-//    client.println();
-//    client.print(data);
-//    client.println();
-
     Serial.println(data);
     Serial.println("connecting...");
     // send the HTTP POST request:
